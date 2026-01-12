@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>职场狼人杀</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="js/echarts.min.js"></script>
+</head>
+<body>
+    <!-- 游戏初始化界面 -->
+    <div id="initScreen" class="screen active">
+        <div class="container">
+            <h1 class="game-title">职场狼人杀</h1>
+            <div class="init-form">
+                <div class="form-group">
+                    <label for="playerName">请输入您的名称：</label>
+                    <input type="text" id="playerName" placeholder="请输入名称" maxlength="20" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label for="initCycleDays">身份选择周期（天）：</label>
+                    <input type="number" id="initCycleDays" min="1" max="30" value="7">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskStartTime">任务发放周期（开始时间）：</label>
+                    <input type="time" id="taskStartTime" value="09:00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="taskEndTime">任务发放周期（结束时间）：</label>
+                    <input type="time" id="taskEndTime" value="17:00">
+                </div>
+                
+                <button id="confirmBtn" class="btn-primary">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 身份选择窗口 -->
+    <div id="roleSelectModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">选择身份</h2>
+            <div class="role-cards">
+                <div class="role-card" data-role="神">
+                    <div class="role-icon">神</div>
+                    <div class="role-name">神</div>
+                </div>
+                <div class="role-card" data-role="狼">
+                    <div class="role-icon">狼</div>
+                    <div class="role-name">狼</div>
+                </div>
+                <div class="role-card" data-role="人">
+                    <div class="role-icon">人</div>
+                    <div class="role-name">人</div>
+                </div>
+                <div class="role-card" data-role="?">
+                    <div class="role-icon">?</div>
+                    <div class="role-name">随机</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainScreen" class="screen">
+        <div class="container">
+            <header class="main-header">
+                <h1>职场狼人杀</h1>
+                <div class="player-info">
+                    <span>玩家：<strong id="displayPlayerName"></strong></span>
+                    <span class="role-display">身份：<strong id="displayPlayerRole"></strong></span>
+                </div>
+                <div class="header-buttons">
+                    <button id="attributesBtn" class="btn-settings">📊 属性</button>
+                    <button id="achievementDebugBtn" class="btn-settings">🔍 成就调试</button>
+                    <button id="titlesBtn" class="btn-settings">🏆 称号</button>
+                    <button id="settingsBtn" class="btn-settings">⚙️ 设置</button>
+                </div>
+            </header>
+            <main class="main-content">
+                <div class="tasks-container">
+                    <div class="tasks-header">
+                        <h2 class="tasks-title">任务列表</h2>
+                        <button id="debugTaskBtn" class="btn-debug">发放任务（调试）</button>
+                    </div>
+                    <div id="tasksList" class="tasks-list">
+                        <!-- 任务卡片将动态添加到这里 -->
+                    </div>
+                    <div id="emptyTasks" class="empty-tasks">
+                        暂无任务，等待任务发放...
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- 属性窗口 -->
+    <div id="attributesModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">属性雷达图</h2>
+            <!-- 当前属性数值（按 神 / 狼 / 人 顺序显示） -->
+            <div class="attributes-summary">
+                <div class="attribute-item">
+                    <span class="attribute-label">神</span>
+                    <span class="attribute-value" id="attrGodValue">0</span>
+                </div>
+                <div class="attribute-item">
+                    <span class="attribute-label">狼</span>
+                    <span class="attribute-value" id="attrWolfValue">0</span>
+                </div>
+                <div class="attribute-item">
+                    <span class="attribute-label">人</span>
+                    <span class="attribute-value" id="attrHumanValue">0</span>
+                </div>
+            </div>
+            <div id="radarChart" style="width: 100%; height: 430px;"></div>
+            <button id="closeAttributesBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <!-- 成就调试窗口 -->
+    <div id="achievementDebugModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">成就调试</h2>
+            <div class="debug-content">
+                <div class="debug-inputs">
+                    <div class="debug-input-group">
+                        <label class="debug-label">神：</label>
+                        <input type="number" id="debugGodInput" class="debug-input" min="0" value="0">
+                    </div>
+                    <div class="debug-input-group">
+                        <label class="debug-label">狼：</label>
+                        <input type="number" id="debugWolfInput" class="debug-input" min="0" value="0">
+                    </div>
+                    <div class="debug-input-group">
+                        <label class="debug-label">人：</label>
+                        <input type="number" id="debugHumanInput" class="debug-input" min="0" value="0">
+                    </div>
+                </div>
+                <button id="debugCalculateBtn" class="btn-primary">计算</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 成就调试结果窗口 -->
+    <div id="achievementDebugResultModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">成就计算结果</h2>
+            <div id="debugResults" class="debug-results">
+                <!-- 计算结果将显示在这里 -->
+            </div>
+            <div class="debug-result-actions">
+                <button id="confirmAchievementDebugBtn" class="btn-primary">确认</button>
+                <button id="closeAchievementDebugResultBtn" class="btn-close">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 称号窗口 -->
+    <div id="titlesModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">称号</h2>
+            <div id="titlesList" class="titles-grid">
+                <!-- 称号卡片将动态添加到这里 -->
+            </div>
+            <button id="closeTitlesBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <!-- 称号详情窗口 -->
+    <div id="titleDetailModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="titleDetailName">称号详情</h2>
+            <div id="titleDetailDescriptions" class="title-detail-descriptions">
+                <!-- 成就描述将显示在这里 -->
+            </div>
+            <button id="closeTitleDetailBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <!-- 成就结果窗口 -->
+    <div id="achievementResultModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">周期成就结果</h2>
+            <div id="achievementResultContent" class="achievement-result-content">
+                <!-- 成就内容将显示在这里 -->
+            </div>
+            <div id="completedTasksSection" class="completed-tasks-section">
+                <h3 class="section-title">本周期完成任务</h3>
+                <div id="completedTasksList" class="completed-tasks-list">
+                    <!-- 完成的任务列表将显示在这里 -->
+                </div>
+            </div>
+            <button id="closeAchievementResultBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <!-- 任务详情窗口 -->
+    <div id="taskDetailModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="taskDetailTitle">任务详情</h2>
+            <div class="task-detail-content">
+                <div class="detail-section">
+                    <h3 class="detail-label">任务目标</h3>
+                    <p class="detail-value" id="taskDetailGoal">待定</p>
+                </div>
+                <div class="detail-section">
+                    <h3 class="detail-label">任务故事</h3>
+                    <p class="detail-value" id="taskDetailStory">待定</p>
+                </div>
+                <div class="detail-section">
+                    <h3 class="detail-label">任务分数</h3>
+                    <div class="task-scores" id="taskDetailScores">
+                        <div class="score-item">
+                            <span class="score-label">狼性</span>
+                            <span class="score-value" id="scoreWolf">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">神性</span>
+                            <span class="score-value" id="scoreGod">0</span>
+                        </div>
+                        <div class="score-item">
+                            <span class="score-label">人性</span>
+                            <span class="score-value" id="scoreHuman">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="closeTaskDetailBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <!-- 设置窗口 -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content">
+            <h2 class="modal-title">设置</h2>
+            <div class="settings-content">
+                <div class="setting-item">
+                    <label for="cycleDays">身份选择周期（天）：</label>
+                    <input type="number" id="cycleDays" min="1" max="30" value="7">
+                    <button id="saveSettingsBtn" class="btn-primary">保存</button>
+                </div>
+                <div class="setting-item">
+                    <button id="resetCycleBtn" class="btn-secondary">重置周期（立即显示身份选择）</button>
+                </div>
+                <div class="setting-item">
+                    <button id="clearDataBtn" class="btn-danger">清除所有数据（重新开始）</button>
+                </div>
+            </div>
+            <button id="closeSettingsBtn" class="btn-close">关闭</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
